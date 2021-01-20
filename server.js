@@ -26,7 +26,8 @@ app.get("/", (req, res) => {
 });
 
 const mongoose = require('mongoose');
-mongoose.connect('mongodb+srv://tyao_admin:rriveryth7@cluster-telus-ehs.4nek4.mongodb.net/ehsDB?retryWrites=true&w=majority', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect('mongodb+srv://tyao_admin:rriveryth7@cluster-telus-ehs.4nek4.mongodb.net/ehsdb2?retryWrites=true&w=majority', 
+{useNewUrlParser: true, useUnifiedTopology: true});
 
 const Patient = mongoose.model('Patient', { name: String, encs: [String], allowedEncs: [String]});
 
