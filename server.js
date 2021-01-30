@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 var corsOptions = {
-  origin: "http://localhost:8080"
+  origin: "http://localhost:4200"
 };
 
 const app = express();
@@ -26,93 +26,142 @@ app.get("/", (req, res) => {
 });
 
 const mongoose = require('mongoose');
-mongoose.connect('mongodb+srv://tyao_admin:rriveryth7@cluster-telus-ehs.4nek4.mongodb.net/ehsdb2?retryWrites=true&w=majority', 
+mongoose.connect('mongodb+srv://tyao_admin:rriveryth7@cluster-telus-ehs.4nek4.mongodb.net/hdb?retryWrites=true&w=majority',
 {useNewUrlParser: true, useUnifiedTopology: true});
 
-const Patient = mongoose.model('Patient', { name: String, encs: [String], allowedEncs: [String]});
+const Contest = mongoose.model('Contest', { name: String, csts: [{name: String, odds: Number}], over: Boolean, wnrs: [String]});
+const History = mongoose.model('History', { contestName: String, cst: {name: String, odds: Number}, riskAmount: Number});
 
-app.get("/hello", (req, res) => {
-    Patient.find( (err, foundPatients) => {
+Contest.deleteMany({}).then();
+History.deleteMany({}).then();
+
+app.get("/admin/contests", (req, res) => {
+    Contest.find( (err, foundContests) => {
         //console.log(foundCats);
-        res.send(foundPatients);
+        res.send(foundContests);
     });
 })
 
-app.post("/", (req, res) => {
-    const p = new Patient({name: req.body.name, encs: req.body.encs, allowedEncs: req.body.encs});
-    p.save();
+app.get("/contests", (req, res) => {
+    Contest.find( { over: false}, (err, foundContests) => {
+        //console.log(foundCats);
+        res.send(foundContests);
+    });
+})
+
+
+app.post("/admin/contests", (req, res) => {
+    const c = new Contest({name: req.body.name, csts: req.body.csts, over: false, wnrs: []});
+    c.save();
     res.send({message: "no problem!"});
 })
 
-app.put("/patients/:id", (req, res) => {
+app.put("/admin/contests/:id", (req, res) => {
     const id = req.params.id;
     console.log(req.body);
-    Patient.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
+    Contest.findByIdAndUpdate(id, req.body, { useFindAndModify: false })
       .then(data => {
         if (!data) {
           res.status(404).send({
-            message: `Cannot update Patient with id=${id}. Maybe Patient was not found!`
+            message: `Cannot update Contest with id=${id}. Maybe Contest was not found!`
           });
-      } else res.send({ message: "Patient was updated successfully." });
+      } else res.send({ message: "Contest was updated successfully." });
       })
       .catch(err => {
         res.status(500).send({
-          message: "Error updating Patient with id=" + id
+          message: "Error updating Contest with id=" + id
         });
     });
 })
 
-app.get("/patients/:id", (req, res) => {
+app.get("/admin/contests/:id", (req, res) => {
 
   const id = req.params.id;
 
-  Patient.findById(id)
+  Contest.findById(id)
     .then(data => {
       if (!data)
-        res.status(404).send({ message: "Not found patient with id " + id });
+        res.status(404).send({ message: "Not found contest with id " + id });
       else res.send(data);
     })
     .catch(err => {
       res
         .status(500)
-        .send({ message: "Error retrieving patient with id=" + id });
+        .send({ message: "Error retrieving contest with id=" + id });
     });
 });
 
-app.delete("/patients", (req, res) => {
-    Patient.deleteMany({})
+app.delete("/admin/contests", (req, res) => {
+    Contest.deleteMany({})
   .then(data => {
     res.send({
-      message: `${data.deletedCount} Patients were deleted successfully!`
+      message: `${data.deletedCount} Contests were deleted successfully!`
     });
   })
   .catch(err => {
     res.status(500).send({
       message:
-        err.message || "Some error occurred while removing all patients."
+        err.message || "Some error occurred while removing all contests."
     });
   });
 })
 
-app.delete("/patients/:id", (req, res) => {
+app.delete("/admin/contests/:id", (req, res) => {
 
     const id = req.params.id;
 
-    Patient.findByIdAndRemove(id, {useFindAndModify: false })
+    Contest.findByIdAndRemove(id, {useFindAndModify: false })
       .then(data => {
         if (!data) {
           res.status(404).send({
-            message: `Cannot delete Patient with id=${id}. Maybe Patient was not found!`
+            message: `Cannot delete contest with id=${id}. Maybe contest was not found!`
           });
         } else {
           res.send({
-            message: "Patient was deleted successfully!"
+            message: "Contest was deleted successfully!"
           });
         }
       })
       .catch(err => {
         res.status(500).send({
-          message: "Could not delete Patient with id=" + id
+          message: "Could not delete Contest with id=" + id
         });
       });
+});
+
+app.post("/history", (req, res) => {
+    const h = new History({contestName: req.body.contestName, cst: req.body.cst, riskAmount: req.body.riskAmount});
+    console.log(req.body.riskAmount)
+    h.save();
+    res.send({message: "no problem!"});
+})
+
+app.get("/history", (req, res) => {
+    History.find((err, foundHistory) => {
+        //console.log(foundCats);
+        res.send(foundHistory);
+    });
+})
+
+app.delete("/history", (req, res) => {
+    History.deleteMany({})
+  .then(data => {
+    res.send({
+      message: `${data.deletedCount} History was deleted successfully!`
+    });
+  })
+  .catch(err => {
+    res.status(500).send({
+      message:
+        err.message || "Some error occurred while removing all contests."
+    });
+  });
+})
+
+app.get("/history/checkWL/:name", (req, res) => {
+  const name = req.params.name;
+  Contest.find( { name: name}, (err, foundHistory) => {
+      //console.log(foundCats);
+      res.send(foundHistory[0].wnrs);
+  });
 });
