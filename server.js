@@ -158,8 +158,8 @@ app.delete("/history", (req, res) => {
   });
 })
 
-app.get("/history/checkWL/:name", (req, res) => {
-  const name = req.params.name;
+app.post("/history/checkWL", (req, res) => {
+  const name = req.body.name;
   Contest.find( { name: name}, (err, foundHistory) => {
       //console.log(foundCats);
       res.send(foundHistory[0].wnrs);
