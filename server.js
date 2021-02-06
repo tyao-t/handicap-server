@@ -30,10 +30,7 @@ mongoose.connect('mongodb+srv://tyao_admin:rriveryth7@cluster-telus-ehs.4nek4.mo
 {useNewUrlParser: true, useUnifiedTopology: true});
 
 const Contest = mongoose.model('Contest', { name: String, csts: [{name: String, odds: Number}], over: Boolean, wnrs: [String]});
-const History = mongoose.model('History', { contestName: String, cst: {name: String, odds: Number}, riskAmount: Number});
-
-Contest.deleteMany({}).then();
-History.deleteMany({}).then();
+const History = mongoose.model('History', { cid: String, contestName: String, cst: {name: String, odds: Number}, riskAmount: Number});
 
 app.get("/admin/contests", (req, res) => {
     Contest.find( (err, foundContests) => {
@@ -129,15 +126,15 @@ app.delete("/admin/contests/:id", (req, res) => {
       });
 });
 
-app.post("/history", (req, res) => {
-    const h = new History({contestName: req.body.contestName, cst: req.body.cst, riskAmount: req.body.riskAmount});
+app.post("/history/:cid", (req, res) => {
+    const h = new History({cid: req.params.cid, contestName: req.body.contestName, cst: req.body.cst, riskAmount: req.body.riskAmount});
     console.log(req.body.riskAmount)
     h.save();
     res.send({message: "no problem!"});
 })
 
-app.get("/history", (req, res) => {
-    History.find((err, foundHistory) => {
+app.get("/history/:cid", (req, res) => {
+    History.find({cid: req.params.cid}, (err, foundHistory) => {
         //console.log(foundCats);
         res.send(foundHistory);
     });
@@ -158,9 +155,8 @@ app.delete("/history", (req, res) => {
   });
 })
 
-app.post("/history/checkWL", (req, res) => {
-  const name = req.body.name;
-  Contest.find( { name: name}, (err, foundHistory) => {
+app.post("/history/checkWL/:cid", (req, res) => {
+  Contest.find( { cid: req.params.cid, name: req.body.name}, (err, foundHistory) => {
       //console.log(foundCats);
       res.send(foundHistory[0].wnrs);
   });
